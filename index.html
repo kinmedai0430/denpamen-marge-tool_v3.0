@@ -283,7 +283,7 @@
       </div>
       <div class="slider-group">
           <label for="bulkTextSize">QR上のテキストサイズ調整</label>
-          <input type="range" id="bulkTextSize" min="10" max="200" value="70">
+          <input type="range" id="bulkTextSize" min="10" max="200" value="65">
       </div>
       <div class="slider-group">
         <label for="left-qr-offset">左QR位置調整</label>
@@ -295,11 +295,11 @@
       </div>
       <div class="slider-group">
           <label for="top-qr-vertical-offset">上QR位置調整</label>
-          <input type="range" id="top-qr-vertical-offset" min="-500" max="500" value="0">
+          <input type="range" id="top-qr-vertical-offset" min="-500" max="500" value="-5">
       </div>
       <div class="slider-group">
           <label for="bottom-qr-vertical-offset">下QR位置調整</label>
-          <input type="range" id="bottom-qr-vertical-offset" min="-500" max="500" value="270">
+          <input type="range" id="bottom-qr-vertical-offset" min="-500" max="500" value="350">
       </div>
     </div>
 
@@ -436,11 +436,11 @@
     const clearButton = document.getElementById('clearButton');
     const iosTip = document.getElementById('ios-download-tip');
     const sliders = {
-      bulkTextSize: { id: 'bulkTextSize', initial: 70 },
+      bulkTextSize: { id: 'bulkTextSize', initial: 65 },
       leftOffset: { id: 'left-qr-offset', initial: 0 },
       rightOffset: { id: 'right-qr-offset', initial: 0 },
-      topVertical: { id: 'top-qr-vertical-offset', initial: 0 },
-      bottomVertical: { id: 'bottom-qr-vertical-offset', initial: 270 }
+      topVertical: { id: 'top-qr-vertical-offset', initial: -5 },
+      bottomVertical: { id: 'bottom-qr-vertical-offset', initial: 350 }
     };
     const options = {
       toggleText: 'toggleText',
