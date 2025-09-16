@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>固定ルート画像合成v3.0</title>
+  <style>
+    :root {
+      --color-bg: #263238;
+      --color-text: #eceff1;
+      --color-dropzone-bg: #37474f;
+      --color-dropzone-border: #b0bec5;
+      --color-blue: #007bff;
+      --color-blue-hover: #0056b3;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 20px;
+      background: var(--color-bg);
+      color: var(--color-text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .main-content-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        background: var(--color-dropzone-bg);
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 1200px;
+        width: 100%;
+    }
+    .section {
+        background: transparent;
+        padding: 0;
+        border-radius: 8px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .preview-area {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+    }
+    .drop-zone {
+      border: 2px dashed var(--color-dropzone-border);
+      padding: 15px;
+      text-align: center;
+      margin-bottom: 15px;
+      background: var(--color-dropzone-bg);
+      color: var(--color-text);
+      cursor: pointer;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 120px;
+      border-radius: 8px;
+    }
+    .drop-zone.qr {
+      min-height: 100px;
+    }
+    .drop-zone.dragover {
+      border-color: var(--color-blue);
+      background-color: rgba(0, 123, 255, 0.1);
+    }
+    .preview-thumb {
+      max-width: 100%;
+      max-height: 80px;
+      display: block;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    .drop-zone p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    #canvas {
+      display: none;
+    }
+    #preview {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid var(--color-dropzone-border);
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .qr-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .qr-input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .slider-group {
+      width: 100%;
+      margin-top: 10px;
+      text-align: left;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 25px;
+    }
+    .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    #downloadButton, #clearButton {
+      padding: 15px 20px;
+      font-size: 18px;
+      background-color: var(--color-blue);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #downloadButton:hover, #clearButton:hover {
+      background-color: var(--color-blue-hover);
+    }
+    #clearButton {
+        background-color: #dc3545;
+    }
+    #clearButton:hover {
+        background-color: #c82333;
+    }
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    .hidden {
+      display: none !important;
+    }
+    h2, h3 {
+      font-weight: 500;
+      margin-top: 0;
+      text-align: center;
+      color: var(--color-blue);
+    }
+    input[type="text"] {
+      padding: 10px;
+      background: #263238;
+      border: 1px solid #b0bec5;
+      color: #eceff1;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input[type="checkbox"] {
+      accent-color: var(--color-blue);
+    }
+    .tip-text {
+        font-size: 14px;
+        color: #b0bec5;
+        margin-top: 10px;
+    }
+    .guide-text {
+      font-size: 14px;
+      margin-top: 0;
+      line-height: 1.6;
+    }
+    hr {
+      margin: 10px 0;
+      border-color: #546e7a;
+    }
+
+    /*  スマホ用  */
+    #guide-section { order: 1; }
+    #background-image-section { order: 2; }
+    #qr-section { order: 3; }
+    #settings-section { order: 4; }
+    #preview-section { order: 5; }
+    #individual-text-section { order: 6; }
+
+
+    /* PC用 */
+    @media (min-width: 768px) {
+        body {
+            padding: 40px;
+        }
+        .main-content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1.5fr;
+            grid-template-rows: auto auto;
+            gap: 40px;
+            padding: 40px;
+        }
+        .section {
+            order: initial !important;
+        }
+
+        /* PCのUI(プレビュー前) */
+        #settings-section { grid-column: 1; grid-row: 1; }
+        #individual-text-section { grid-column: 1; grid-row: 2; }
+        
+        #preview-section { grid-column: 2; grid-row: 1; }
+        #background-image-section { 
+            grid-column: 2; 
+            grid-row: 2;
+            transform: translateY(-600px);
+        }
+
+        #qr-section { grid-column: 3; grid-row: 1; }
+        #guide-section { grid-column: 3; grid-row: 2; align-self: start; }
+
+        /*PCのUI(プレビュー後)*/
+        .main-content-wrapper.preview-active #preview-section {
+            grid-row: 1;
+        }
+        .main-content-wrapper.preview-active #background-image-section {
+            grid-row: 2;
+            transform: translateY(-50px);
+        }
+
+        .drop-zone {
+            padding: 20px;
+            min-height: 150px;
+        }
+        .drop-zone.qr {
+            min-height: 120px;
+        }
+        .preview-thumb {
+            max-height: 100px;
+        }
+        .qr-group {
+            flex-direction: row;
+        }
+        .button-group {
+            flex-direction: row;
+        }
+        #downloadButton, #clearButton {
+            width: auto;
+            padding: 15px 30px;
+            font-size: 20px;
+        }
+        .guide-text {
+            font-size: 16px;
+        }
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="main-content-wrapper">
+    <div id="settings-section" class="section">
+      <h3>調整</h3>
+      <div class="controls-group">
+          <label>
+            <input type="checkbox" id="toggleText" checked>QR上のテキストを表示
+          </label>
+          <div>
+            <label for="textColorPicker">テキストの色</label>
+            <input type="color" id="textColorPicker" value="#ffffff">
+          </div>
+      </div>
+      <div class="slider-group">
+          <label for="bulkTextSize">QR上のテキストサイズ調整</label>
+          <input type="range" id="bulkTextSize" min="10" max="200" value="40">
+      </div>
+      <div class="slider-group">
+        <label for="left-qr-offset">左QR位置調整</label>
+        <input type="range" id="left-qr-offset" min="-700" max="800" value="0">
+      </div>
+      <div class="slider-group">
+        <label for="right-qr-offset">右QR位置調整</label>
+        <input type="range" id="right-qr-offset" min="-1200" max="200" value="0">
+      </div>
+      <div class="slider-group">
+          <label for="top-qr-vertical-offset">上QR位置調整</label>
+          <input type="range" id="top-qr-vertical-offset" min="-500" max="500" value="0">
+      </div>
+      <div class="slider-group">
+          <label for="bottom-qr-vertical-offset">下QR位置調整</label>
+          <input type="range" id="bottom-qr-vertical-offset" min="-500" max="500" value="270">
+      </div>
+    </div>
+
+    <div id="individual-text-section" class="section">
+      <h3>個別テキスト表示</h3>
+      <label>
+        <input type="checkbox" id="individualTextToggle"> 個別テキストを表示
+      </label>
+      <div class="individual-text-controls hidden">
+        <label for="individualText1">テキスト</label>
+        <input type="text" id="individualText1" value="先など">
+        <div class="slider-group">
+            <label for="individualTextSize1">サイズ調整</label>
+            <input type="range" id="individualTextSize1" min="10" max="200" value="80">
+        </div>
+        <div class="slider-group">
+            <label for="individualTextX1">左右調整</label>
+            <input type="range" id="individualTextX1" min="-500" max="1500" value="0">
+        </div>
+        <div class="slider-group">
+            <label for="individualTextY1">上下調整</label>
+            <input type="range" id="individualTextY1" min="-500" max="500" value="0">
+        </div>
+        <hr>
+        <label>
+          <input type="checkbox" id="individualTextToggle2"> 2つ目の個別テキストを表示
+        </label>
+        <div class="individual-text-controls2 hidden">
+          <label for="individualText2">テキスト</label>
+          <input type="text" id="individualText2" value="後など">
+          <div class="slider-group">
+              <label for="individualTextSize2">サイズ調整</label>
+              <input type="range" id="individualTextSize2" min="10" max="200" value="80">
+          </div>
+          <div class="slider-group">
+              <label for="individualTextX2">左右調整</label>
+              <input type="range" id="individualTextX2" min="-1500" max="500" value="0">
+          </div>
+          <div class="slider-group">
+              <label for="individualTextY2">上下調整</label>
+              <input type="range" id="individualTextY2" min="-500" max="500" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="preview-section" class="section preview-area">
+      <h3>合成画像プレビュー</h3>
+      <img id="preview" alt="合成画像プレビュー" class="hidden">
+      <div class="button-group">
+          <button id="downloadButton" class="hidden">画像をダウンロード</button>
+          <button id="clearButton" class="hidden">全て削除</button>
+      </div>
+      <p class="tip-text hidden" id="ios-download-tip">iPhone・iPadなどの方はプレビュー画像を<br>長押しして画像をダウンロードしてください</p>
+    </div>
+
+    <div id="background-image-section" class="section">
+        <h2>背景画像</h2>
+        <div class="drop-zone" id="mainDrop">
+            <p>背景画像をここにドロップかクリック</p>
+            <img id="mainThumb" class="preview-thumb hidden" alt="背景画像プレビュー">
+        </div>
+        <input type="file" accept="image/*" id="mainInput">
+    </div>
+
+    <div id="qr-section" class="section">
+      <h3>QRコード</h3>
+      <div class="qr-group">
+        <div class="qr-input-group">
+          <label for="leftTopText">左上QRテキスト</label>
+          <input type="text" id="leftTopText" value="先１">
+          <div class="drop-zone qr" id="leftTopDrop">
+              <p>左上QR画像をここにドロップかクリック</p>
+              <img id="leftTopThumb" class="preview-thumb hidden" alt="左上QRプレビュー">
+          </div>
+          <input type="file" accept="image/*" id="leftTopInput">
+        </div>
+        <div class="qr-input-group">
+          <label for="rightTopText">右上QRテキスト</label>
+          <input type="text" id="rightTopText" value="後１">
+          <div class="drop-zone qr" id="rightTopDrop">
+              <p>右上QR画像をここにドロップかクリック</p>
+              <img id="rightTopThumb" class="preview-thumb hidden" alt="右上QRプレビュー">
+          </div>
+          <input type="file" accept="image/*" id="rightTopInput">
+        </div>
+      </div>
+      <div class="qr-group">
+        <div class="qr-input-group">
+          <label for="leftQRText">左下QRテキスト</label>
+          <input type="text" id="leftQRText" value="先２">
+          <div class="drop-zone qr" id="leftQRDrop">
+              <p>左下QR画像をここにドロップかクリック</p>
+              <img id="leftThumb" class="preview-thumb hidden" alt="左QRプレビュー">
+          </div>
+          <input type="file" accept="image/*" id="leftQRInput">
+        </div>
+        <div class="qr-input-group">
+          <label for="rightQRText">右下QRテキスト</label>
+          <input type="text" id="rightQRText" value="後２">
+          <div class="drop-zone qr" id="rightQRDrop">
+              <p>右下QR画像をここにドロップかクリック</p>
+              <img id="rightThumb" class="preview-thumb hidden" alt="右QRプレビュー">
+          </div>
+          <input type="file" accept="image/*" id="rightQRInput">
+        </div>
+      </div>
+    </div>
+
+    <div id="guide-section" class="section">
+      <p class="guide-text">
+        ①背景画像をアップロードしてください<br>
+        ②0～4枚のQRコード画像をアップロードしてください<br>
+        ③QR位置や個別テキストなどを調整してください
+      </p>
+    </div>
+
+  </div>
+  <canvas id="canvas"></canvas>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const elements = {
+      main: { input: 'mainInput', drop: 'mainDrop', thumb: 'mainThumb', img: null },
+      leftTop: { input: 'leftTopInput', drop: 'leftTopDrop', thumb: 'leftTopThumb', text: 'leftTopText', img: null },
+      rightTop: { input: 'rightTopInput', drop: 'rightTopDrop', thumb: 'rightTopThumb', text: 'rightTopText', img: null },
+      leftQR: { input: 'leftQRInput', drop: 'leftQRDrop', thumb: 'leftThumb', text: 'leftQRText', img: null },
+      rightQR: { input: 'rightQRInput', drop: 'rightQRDrop', thumb: 'rightThumb', text: 'rightQRText', img: null }
+    };
+    const mainWrapper = document.querySelector('.main-content-wrapper');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const preview = document.getElementById('preview');
+    const downloadButton = document.getElementById('downloadButton');
+    const clearButton = document.getElementById('clearButton');
+    const iosTip = document.getElementById('ios-download-tip');
+    const sliders = {
+      bulkTextSize: { id: 'bulkTextSize', initial: 40 },
+      leftOffset: { id: 'left-qr-offset', initial: 0 },
+      rightOffset: { id: 'right-qr-offset', initial: 0 },
+      topVertical: { id: 'top-qr-vertical-offset', initial: 0 },
+      bottomVertical: { id: 'bottom-qr-vertical-offset', initial: 270 }
+    };
+    const options = {
+      toggleText: 'toggleText',
+      textColor: 'textColorPicker'
+    };
+    const individualTextControls = {
+        toggle: 'individualTextToggle',
+        text1: 'individualText1',
+        size1: 'individualTextSize1',
+        x1: 'individualTextX1',
+        y1: 'individualTextY1',
+        toggle2: 'individualTextToggle2',
+        text2: 'individualText2',
+        size2: 'individualTextSize2',
+        x2: 'individualTextX2',
+        y2: 'individualTextY2'
+    };
+    const imgData = {};
+    let isMerging = false;
+    const loadImage = (file) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        const reader = new FileReader();
+        reader.onload = e => img.src = e.target.result;
+        reader.readAsDataURL(file);
+      });
+    };
+    const showThumbnail = (file, dropZoneElem, imgElem) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        imgElem.src = e.target.result;
+        imgElem.classList.remove('hidden');
+        dropZoneElem.querySelector('p').classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    };
+    const resetElements = () => {
+        for (const name in elements) {
+            const elem = elements[name];
+            const dropZone = document.getElementById(elem.drop);
+            const thumbImg = document.getElementById(elem.thumb);
+            const fileInput = document.getElementById(elem.input);
+            
+            imgData[name] = null;
+            
+            thumbImg.classList.add('hidden');
+            thumbImg.src = '';
+            dropZone.querySelector('p').classList.remove('hidden');
+            fileInput.value = '';
+        }
+        document.getElementById(options.toggleText).checked = true;
+        document.getElementById(options.textColor).value = '#ffffff';
+        for (const key in sliders) {
+            document.getElementById(sliders[key].id).value = sliders[key].initial;
+        }
+        document.getElementById(individualTextControls.toggle).checked = false;
+        document.querySelector('.individual-text-controls').classList.add('hidden');
+        document.getElementById(individualTextControls.text1).value = '先など';
+        document.getElementById(individualTextControls.size1).value = 80;
+        document.getElementById(individualTextControls.x1).value = 0;
+        document.getElementById(individualTextControls.y1).value = 0;
+        document.getElementById(individualTextControls.toggle2).checked = false;
+        document.querySelector('.individual-text-controls2').classList.add('hidden');
+        document.getElementById(individualTextControls.text2).value = '後など';
+        document.getElementById(individualTextControls.size2).value = 80;
+        document.getElementById(individualTextControls.x2).value = 0;
+        document.getElementById(individualTextControls.y2).value = 0;
+        document.getElementById('leftTopText').value = '先１';
+        document.getElementById('rightTopText').value = '後１';
+        document.getElementById('leftQRText').value = '先２';
+        document.getElementById('rightQRText').value = '後２';
+        preview.classList.add('hidden');
+        preview.src = '';
+        downloadButton.classList.add('hidden');
+        clearButton.classList.add('hidden');
+        iosTip.classList.add('hidden');
+        mainWrapper.classList.remove('preview-active');
+        scheduleMerge();
+    };
+    const tryMerge = () => {
+      isMerging = false;
+      const mainImg = imgData.main;
+      if (!mainImg) {
+        preview.classList.add('hidden');
+        downloadButton.classList.add('hidden');
+        clearButton.classList.add('hidden');
+        iosTip.classList.add('hidden');
+        mainWrapper.classList.remove('preview-active');
+        return;
+      }
+      canvas.width = mainImg.width;
+      canvas.height = mainImg.height;
+      ctx.drawImage(mainImg, 0, 0);
+      const qrWidth = mainImg.width * 0.15;
+      const qrHeight = qrWidth;
+      const qrMargin = mainImg.width * 0.02;
+      const qrOffsets = {
+        left: parseInt(document.getElementById(sliders.leftOffset.id).value),
+        right: parseInt(document.getElementById(sliders.rightOffset.id).value),
+        top: parseInt(document.getElementById(sliders.topVertical.id).value),
+        bottom: parseInt(document.getElementById(sliders.bottomVertical.id).value)
+      };
+      const topY = mainImg.height * 0.2 + qrOffsets.top;
+      const bottomY = mainImg.height * 0.2 + qrOffsets.bottom + mainImg.height * 0.15;
+      const qrPositions = {
+        leftTop: { img: imgData.leftTop, x: qrMargin + 540 + qrOffsets.left, y: topY, text: elements.leftTop.text },
+        rightTop: { img: imgData.rightTop, x: mainImg.width - qrWidth - qrMargin + qrOffsets.right, y: topY, text: elements.rightTop.text },
+        leftQR: { img: imgData.leftQR, x: qrMargin + 540 + qrOffsets.left, y: bottomY, text: elements.leftQR.text },
+        rightQR: { img: imgData.rightQR, x: mainImg.width - qrWidth - qrMargin + qrOffsets.right, y: bottomY, text: elements.rightQR.text }
+      };
+      for (const key in qrPositions) {
+        const pos = qrPositions[key];
+        if (pos.img) {
+          ctx.drawImage(pos.img, pos.x, pos.y, qrWidth, qrHeight);
+        }
+      }
+      const showGlobalText = document.getElementById(options.toggleText).checked;
+      ctx.fillStyle = document.getElementById(options.textColor).value;
+      ctx.textAlign = 'center';
+      if (showGlobalText) {
+          const bulkTextSize = parseInt(document.getElementById(sliders.bulkTextSize.id).value);
+          ctx.font = `bold ${bulkTextSize}px Arial`;
+          for (const key in qrPositions) {
+              const pos = qrPositions[key];
+              if (pos.img) {
+                  const text = document.getElementById(pos.text).value;
+                  ctx.fillText(text, pos.x + qrWidth / 2, pos.y - 40);
+              }
+          }
+      }
+      if (document.getElementById(individualTextControls.toggle).checked) {
+          const text1 = document.getElementById(individualTextControls.text1).value;
+          const individualTextSize1 = parseInt(document.getElementById(individualTextControls.size1).value);
+          const textX1 = parseInt(document.getElementById(individualTextControls.x1).value);
+          const textY1 = parseInt(document.getElementById(individualTextControls.y1).value);
+          
+          ctx.font = `bold ${individualTextSize1}px Arial`;
+          
+          const baseX1 = canvas.width / 2 - 600;
+          const baseY1 = canvas.height / 2;
+          
+          ctx.fillText(text1, baseX1 + textX1, baseY1 + textY1);
+          if (document.getElementById(individualTextControls.toggle2).checked) {
+              const text2 = document.getElementById(individualTextControls.text2).value;
+              const individualTextSize2 = parseInt(document.getElementById(individualTextControls.size2).value);
+              const textX2 = parseInt(document.getElementById(individualTextControls.x2).value);
+              const textY2 = parseInt(document.getElementById(individualTextControls.y2).value);
+              
+              ctx.font = `bold ${individualTextSize2}px Arial`;
+              
+              const baseX2 = canvas.width / 2 + 600;
+              const baseY2 = canvas.height / 2;
+              
+              ctx.fillText(text2, baseX2 + textX2, baseY2 + textY2);
+          }
+      }
+      preview.src = canvas.toDataURL('image/png');
+      preview.classList.remove('hidden');
+      downloadButton.classList.remove('hidden');
+      clearButton.classList.remove('hidden');
+      iosTip.classList.remove('hidden');
+      mainWrapper.classList.add('preview-active');
+    };
+    const scheduleMerge = () => {
+      if (isMerging) return;
+      isMerging = true;
+      window.requestAnimationFrame(tryMerge);
+    };
+    downloadButton.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'merged-image.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+    clearButton.addEventListener('click', resetElements);
+    for (const name in elements) {
+      const elem = elements[name];
+      const dropZone = document.getElementById(elem.drop);
+      const fileInput = document.getElementById(elem.input);
+      const thumbImg = document.getElementById(elem.thumb);
+      const textInput = elem.text ? document.getElementById(elem.text) : null;
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+      dropZone.addEventListener('dragenter', e => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+      });
+      dropZone.addEventListener('drop', async e => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          showThumbnail(file, dropZone, thumbImg);
+          imgData[name] = await loadImage(file);
+          scheduleMerge();
+        }
+      });
+      fileInput.addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (file) {
+          showThumbnail(file, dropZone, thumbImg);
+          imgData[name] = await loadImage(file);
+          scheduleMerge();
+        }
+      });
+      if (textInput) {
+        textInput.addEventListener('input', scheduleMerge);
+      }
+    }
+    document.getElementById(options.toggleText).addEventListener('change', scheduleMerge);
+    document.getElementById(options.textColor).addEventListener('input', scheduleMerge);
+    for (const key in sliders) {
+      document.getElementById(sliders[key].id).addEventListener('input', scheduleMerge);
+    }
+    const individualTextToggle1 = document.getElementById(individualTextControls.toggle);
+    const individualTextDiv1 = document.querySelector('.individual-text-controls');
+    const individualTextToggle2 = document.getElementById(individualTextControls.toggle2);
+    const individualTextDiv2 = document.querySelector('.individual-text-controls2');
+
+    individualTextToggle1.addEventListener('change', () => {
+        if (individualTextToggle1.checked) {
+            individualTextDiv1.classList.remove('hidden');
+        } else {
+            individualTextDiv1.classList.add('hidden');
+        }
+        scheduleMerge();
+    });
+    
+    individualTextToggle2.addEventListener('change', () => {
+        if (individualTextToggle2.checked) {
+            individualTextDiv2.classList.remove('hidden');
+        } else {
+            individualTextDiv2.classList.add('hidden');
+        }
+        scheduleMerge();
+    });
+    
+    document.getElementById(individualTextControls.text1).addEventListener('input', scheduleMerge);
+    document.getElementById(individualTextControls.size1).addEventListener('input', scheduleMerge);
+    document.getElementById(individualTextControls.x1).addEventListener('input', scheduleMerge);
+    document.getElementById(individualTextControls.y1).addEventListener('input', scheduleMerge);
+    
+    document.getElementById(individualTextControls.text2).addEventListener('input', scheduleMerge);
+    document.getElementById(individualTextControls.size2).addEventListener('input', scheduleMerge);
+    document.getElementById(individualTextControls.x2).addEventListener('input', scheduleMerge);
+    document.getElementById(individualTextControls.y2).addEventListener('input', scheduleMerge);
+  });
+  </script>
+</body>
+</html>
