@@ -198,6 +198,19 @@
     #preview-section { order: 5; }
     #individual-text-section { order: 6; }
 
+    @media (max-width: 767px) {
+      .qr-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .qr-group:nth-of-type(1) .qr-input-group:nth-of-type(2) {
+        order: 3;
+      }
+      .qr-group:nth-of-type(2) .qr-input-group:nth-of-type(1) {
+        order: 2;
+      }
+    }
+
 
     /* PC用 */
     @media (min-width: 768px) {
