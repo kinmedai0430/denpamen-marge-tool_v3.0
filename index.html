@@ -190,7 +190,7 @@
       border-color: #546e7a;
     }
 
-    /*  スマホ用  */
+    /* スマホ用  */
     #guide-section { order: 1; }
     #background-image-section { order: 2; }
     #qr-section { order: 3; }
@@ -283,7 +283,7 @@
       </div>
       <div class="slider-group">
           <label for="bulkTextSize">QR上のテキストサイズ調整</label>
-          <input type="range" id="bulkTextSize" min="10" max="200" value="40">
+          <input type="range" id="bulkTextSize" min="10" max="200" value="65">
       </div>
       <div class="slider-group">
         <label for="left-qr-offset">左QR位置調整</label>
@@ -436,7 +436,7 @@
     const clearButton = document.getElementById('clearButton');
     const iosTip = document.getElementById('ios-download-tip');
     const sliders = {
-      bulkTextSize: { id: 'bulkTextSize', initial: 40 },
+      bulkTextSize: { id: 'bulkTextSize', initial: 65 },
       leftOffset: { id: 'left-qr-offset', initial: 0 },
       rightOffset: { id: 'right-qr-offset', initial: 0 },
       topVertical: { id: 'top-qr-vertical-offset', initial: 0 },
@@ -612,8 +612,15 @@
       window.requestAnimationFrame(tryMerge);
     };
     downloadButton.addEventListener('click', () => {
+      const now = new Date();
+      const timestamp = now.getFullYear().toString() + 
+                        (now.getMonth() + 1).toString().padStart(2, '0') + 
+                        now.getDate().toString().padStart(2, '0') + '_' +
+                        now.getHours().toString().padStart(2, '0') + 
+                        now.getMinutes().toString().padStart(2, '0') + 
+                        now.getSeconds().toString().padStart(2, '0');
       const link = document.createElement('a');
-      link.download = 'merged-image.png';
+      link.download = `merged-image_${timestamp}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     });
@@ -667,7 +674,6 @@
     const individualTextDiv1 = document.querySelector('.individual-text-controls');
     const individualTextToggle2 = document.getElementById(individualTextControls.toggle2);
     const individualTextDiv2 = document.querySelector('.individual-text-controls2');
-
     individualTextToggle1.addEventListener('change', () => {
         if (individualTextToggle1.checked) {
             individualTextDiv1.classList.remove('hidden');
@@ -676,7 +682,6 @@
         }
         scheduleMerge();
     });
-    
     individualTextToggle2.addEventListener('change', () => {
         if (individualTextToggle2.checked) {
             individualTextDiv2.classList.remove('hidden');
@@ -685,12 +690,10 @@
         }
         scheduleMerge();
     });
-    
     document.getElementById(individualTextControls.text1).addEventListener('input', scheduleMerge);
     document.getElementById(individualTextControls.size1).addEventListener('input', scheduleMerge);
     document.getElementById(individualTextControls.x1).addEventListener('input', scheduleMerge);
     document.getElementById(individualTextControls.y1).addEventListener('input', scheduleMerge);
-    
     document.getElementById(individualTextControls.text2).addEventListener('input', scheduleMerge);
     document.getElementById(individualTextControls.size2).addEventListener('input', scheduleMerge);
     document.getElementById(individualTextControls.x2).addEventListener('input', scheduleMerge);
