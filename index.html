@@ -198,19 +198,6 @@
     #preview-section { order: 5; }
     #individual-text-section { order: 6; }
 
-    @media (max-width: 767px) {
-      .qr-group {
-        display: flex;
-        flex-direction: column;
-      }
-      .qr-group:nth-of-type(1) .qr-input-group:nth-of-type(2) {
-        order: 3;
-      }
-      .qr-group:nth-of-type(2) .qr-input-group:nth-of-type(1) {
-        order: 2;
-      }
-    }
-
 
     /* PC用 */
     @media (min-width: 768px) {
@@ -312,7 +299,7 @@
       </div>
       <div class="slider-group">
           <label for="bottom-qr-vertical-offset">下QR位置調整</label>
-          <input type="range" id="bottom-qr-vertical-offset" min="-500" max="500" value="350">
+          <input type="range" id="bottom-qr-vertical-offset" min="-500" max="500" value="330">
       </div>
     </div>
 
@@ -381,7 +368,7 @@
     <div id="qr-section" class="section">
       <h3>QRコード</h3>
       <div class="qr-group">
-        <div class="qr-input-group">
+        <div class="qr-input-group" data-id="leftTop">
           <label for="leftTopText">左上QRテキスト</label>
           <input type="text" id="leftTopText" value="先１">
           <div class="drop-zone qr" id="leftTopDrop">
@@ -390,7 +377,7 @@
           </div>
           <input type="file" accept="image/*" id="leftTopInput">
         </div>
-        <div class="qr-input-group">
+        <div class="qr-input-group" data-id="rightTop">
           <label for="rightTopText">右上QRテキスト</label>
           <input type="text" id="rightTopText" value="後１">
           <div class="drop-zone qr" id="rightTopDrop">
@@ -401,7 +388,7 @@
         </div>
       </div>
       <div class="qr-group">
-        <div class="qr-input-group">
+        <div class="qr-input-group" data-id="leftQR">
           <label for="leftQRText">左下QRテキスト</label>
           <input type="text" id="leftQRText" value="先２">
           <div class="drop-zone qr" id="leftQRDrop">
@@ -410,7 +397,7 @@
           </div>
           <input type="file" accept="image/*" id="leftQRInput">
         </div>
-        <div class="qr-input-group">
+        <div class="qr-input-group" data-id="rightQR">
           <label for="rightQRText">右下QRテキスト</label>
           <input type="text" id="rightQRText" value="後２">
           <div class="drop-zone qr" id="rightQRDrop">
@@ -453,7 +440,7 @@
       leftOffset: { id: 'left-qr-offset', initial: 0 },
       rightOffset: { id: 'right-qr-offset', initial: 0 },
       topVertical: { id: 'top-qr-vertical-offset', initial: -5 },
-      bottomVertical: { id: 'bottom-qr-vertical-offset', initial: 350 }
+      bottomVertical: { id: 'bottom-qr-vertical-offset', initial: 330 }
     };
     const options = {
       toggleText: 'toggleText',
@@ -711,6 +698,28 @@
     document.getElementById(individualTextControls.size2).addEventListener('input', scheduleMerge);
     document.getElementById(individualTextControls.x2).addEventListener('input', scheduleMerge);
     document.getElementById(individualTextControls.y2).addEventListener('input', scheduleMerge);
+    
+    const adjustMobileLayout = () => {
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
+      const qrSection = document.getElementById('qr-section');
+      if (isMobile) {
+
+        const qrInputGroups = qrSection.querySelectorAll('.qr-input-group');
+        const leftTop = qrInputGroups[0];
+        const rightTop = qrInputGroups[1];
+        const leftQR = qrInputGroups[2];
+        const rightQR = qrInputGroups[3];
+        
+        qrSection.appendChild(leftTop);
+        qrSection.appendChild(leftQR);
+        qrSection.appendChild(rightTop);
+        qrSection.appendChild(rightQR);
+      }
+    };
+    
+    adjustMobileLayout();
+    window.addEventListener('resize', adjustMobileLayout);
+
   });
   </script>
 </body>
